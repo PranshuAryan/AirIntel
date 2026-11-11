@@ -11,8 +11,8 @@ export async function geocode(q){
   const d=await j(`https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(q)}&limit=6&apiKey=${GEO}`);
   return d.features.map(f=>({label:f.properties.formatted,lat:f.properties.lat,lon:f.properties.lon,cc:f.properties.country_code}));
 }
-const hrs=t=>{const h=(Date.now()-new Date(t))/36e5;return isNaN(h)||h<-0.05?Infinity:h};
-const when=x=>x.time?.v?new Date(x.time.v*1000).toISOString():x.time?.iso,okF=d=>d.status==='ok'&&typeof d.data.aqi==='number';
+const hrs=t=>{const h=(Date.now()-new Date(t))/36e5;return isNaN(h)||h<-1?Infinity:Math.max(0,h)};
+const when=x=>{const t=x.time||{};if(t.v)return new Date(t.v*1000).toISOString();if(t.iso)return t.iso;if(t.s&&t.tz)return t.s.replace(' ','T')+t.tz;return t.s},okF=d=>d.status==='ok'&&typeof d.data.aqi==='number';
 async function waqi(lat,lon){
   let x=null;try{const d=await j(`https://api.waqi.info/feed/geo:${lat};${lon}/?token=${WAQI}`);if(okF(d))x=d.data}catch{}
   if(!x||hrs(when(x))>3){ // nearest station is stale or missing: look for a fresher one nearby
@@ -37,18 +37,28 @@ async function openaq(lat,lon){
   return{source:'OpenAQ Station',type:'MEASUREMENT',station:L.name,distanceKm:km(lat,lon,...c),updated:la.results.map(r=>r.datetime.utc).sort().at(-1),aqi:p.pm25.sub,pollutants:p,coords:c};
 }
 const ageH=a=>hrs(a.updated),fin=(r,errors)=>applyStandard({...r,errors,fetchedAt:new Date().toISOString()});
-/* ground measurements only: a reading older than 3 h is stale, the freshest station is shown (flagged) up to 24 h; no model fallback */
+
+/* last resort so every location gets a value: CAMS model estimate from Open-Meteo (clearly labelled MODEL, not a ground reading) */
+async function model(lat,lon){
+  const d=await j(`${OM}?latitude=${lat}&longitude=${lon}&timezone=GMT&current=us_aqi,pm2_5,pm10,nitrogen_dioxide,sulphur_dioxide,carbon_monoxide,ozone,us_aqi_pm2_5,us_aqi_pm10,us_aqi_nitrogen_dioxide,us_aqi_sulphur_dioxide,us_aqi_carbon_monoxide,us_aqi_ozone`),c=d.current;
+  if(!c||typeof c.us_aqi!=='number')throw new Error('no model data');
+  const M={pm25:['pm2_5','us_aqi_pm2_5',1],pm10:['pm10','us_aqi_pm10',1],no2:['nitrogen_dioxide','us_aqi_nitrogen_dioxide',1],so2:['sulphur_dioxide','us_aqi_sulphur_dioxide',1],co:['carbon_monoxide','us_aqi_carbon_monoxide',.001],o3:['ozone','us_aqi_ozone',1]},p={};
+  KEYS.forEach(k=>{const[a,b,f]=M[k];if(c[a]!=null)p[k]={value:c[a],unit:'\u00b5g/m\u00b3',sub:c[b]??null,conc:+(c[a]*f).toFixed(3)}});
+  return{source:'Open-Meteo CAMS model',type:'MODEL',station:'Model grid cell at this location',distanceKm:0,updated:c.time.length===16?c.time+':00Z':c.time,aqi:c.us_aqi,pollutants:p,coords:[lat,lon]};
+}
+/* ground measurements first: a reading older than 3 h is stale, the freshest station is shown (flagged) up to 24 h; no model fallback */
 export async function getAirQuality(lat,lon){
   const errors=[];let best=null;
   for(const[n,f]of[['WAQI',waqi],['OpenAQ',openaq]]){
     try{const r=await f(lat,lon),h=ageH(r);
       if(h<=3)return fin(r,errors);
-      errors.push(`${n}: last report ${h.toFixed(1)} h ago`);
+      errors.push(`${n}: last report ${isFinite(h)?h.toFixed(1)+' h ago':'time unavailable'}`);
       if(!best||new Date(r.updated)>new Date(best.updated))best=r;
     }catch(e){errors.push(`${n}: ${e.message}`)}
   }
   if(best&&ageH(best)<=24)return fin({...best,stale:true},errors);
-  throw new Error('No live ground-station reading within range of this location. '+errors.join(' · '));
+  try{return fin(await model(lat,lon),errors)}catch(e){errors.push('Model: '+e.message)}
+  throw new Error('Could not get air quality for this location. '+errors.join(' \u00b7 '));
 }
 export async function stations(s,w,n,e){
   const d=await j(`https://api.waqi.info/v2/map/bounds?latlng=${Math.max(-90,s)},${Math.max(-180,w)},${Math.min(90,n)},${Math.min(180,e)}&networks=all&token=${WAQI}`);
