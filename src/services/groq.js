@@ -20,7 +20,7 @@ async function lookup(name){const g=(await geocode(name))[0];if(!g)return{error:
 export async function chat(history,place,air){
   const sys=`You are AirIntel's air-quality assistant inside a web app. Be accurate, friendly and concise (under 150 words unless asked for more). Plain text only: no markdown symbols like ** or #; use "-" for bullets.
 User's selected location right now: ${air?JSON.stringify(summarize(place,air)):'air data unavailable'}.
-For the AQI or air quality of ANY other place, call get_air_quality; never guess numbers. When quoting readings, name the place, the AQI and its category, say whether it is a live ground measurement or a model estimate, and give the update time and the AQI standard (India NAQI and US AQI differ). Scale safety advice to the AQI. You are not a doctor. Politely decline topics unrelated to air quality, pollution or health.`;
+For the AQI or air quality of ANY other place, call get_air_quality; never guess numbers. When quoting readings, name the place, the AQI and its category, say it is a live ground-station measurement, and give the update time and the AQI standard (India NAQI and US AQI differ). Scale safety advice to the AQI. You are not a doctor. Politely decline topics unrelated to air quality, pollution or health.`;
   const msgs=[{role:'system',content:sys},...history.map(({role,content})=>({role,content}))];
   for(let i=0;i<3;i++){
     const m=await call(msgs,{tools:TOOLS,tool_choice:'auto'});

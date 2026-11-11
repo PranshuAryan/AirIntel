@@ -28,3 +28,4 @@ export function applyStandard(a){
   if(!best)return{...a,std:'us'};
   return{...a,std:'in',pollutants:p,aqi:best.sub,dominant:best.k,converted:a.source.startsWith('WAQI')};
 }
+export const usIndex=(k,x)=>{const bp=US_BP[k];if(x==null||!bp)return null;const b=bp.find(b=>x<=b[1])||bp.at(-1);return Math.round(Math.min(500,(b[3]-b[2])/(b[1]-b[0])*(x-b[0])+b[2]))};

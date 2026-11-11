@@ -16,22 +16,22 @@ A React web app that shows live air quality for any place on Earth, with a shade
 ## Data sources and resources
 | Resource | Used for | Key needed |
 |---|---|---|
-| **WAQI** (api.waqi.info) | Primary live station readings (`/feed/geo:lat;lon`) | `VITE_WAQI_TOKEN` |
-| **OpenAQ v3** | Secondary station readings (raw concentrations) | `VITE_OPENAQ_KEY` |
-| **Open-Meteo Air Quality** (CAMS model) | Fallback current values, history (`past_days`), 5-day forecast, the map's AQI grid | none |
+| **WAQI** (api.waqi.info) | Primary live station readings (`/feed/geo:lat;lon`, plus `/map/bounds` to find a fresher nearby station) and the map's station shading | `VITE_WAQI_TOKEN` |
+| **OpenAQ v3** | Secondary station readings (raw concentrations) and measured daily history | `VITE_OPENAQ_KEY` |
+| **Open-Meteo Air Quality** (CAMS model) | 5-day forecast only — the one modelled dataset in the app (history can optionally be switched to it on request) | none |
 | **Geoapify** | Autocomplete search, reverse geocoding (place names, country) | `VITE_GEOAPIFY_KEY` |
 | **Groq** (`openai/gpt-oss-120b`, fallbacks `gpt-oss-20b`, `qwen3.8-27b`) | Assistant chat with tool calling, Health advisory | `GROQ_API_KEY` (server) |
 | **Esri** Light Gray Base + World Boundaries and Places tiles | Map background, borders, labels | none |
 | Libraries | React 18, React Router 6, Vite 5, Tailwind CSS 3, Leaflet + react-leaflet, Recharts, Lucide icons | — |
 
 ## How it works
-**Data chain (`src/services/apiController.js`).** For a location it tries WAQI (nearest station within 100 km), then OpenAQ (within 25 km), then the Open-Meteo model. Distance is the haversine distance to the station. A station reading older than 3 hours is treated as stale: a fresher source is used if one exists, stale data under 6 hours is shown with a warning, and anything older falls back to the model. Requests bypass the browser cache. The app re-checks every 10 minutes, when you return to the tab, and when you press Refresh.
+**Live data (`src/services/apiController.js`).** Only real ground-station measurements are used for current values: WAQI (nearest station within 100 km, or a fresher nearby station found through the map endpoint), then OpenAQ (within 25 km). A reading older than 3 hours is treated as stale; the freshest station is shown with a warning up to 24 hours, and beyond that the app says no live reading is available instead of guessing. There is no model fallback. Distance is the haversine distance to the station. Requests bypass the browser cache, and the app re-checks every 10 minutes, when you return to the tab, and on Refresh.
 
 **Two AQI standards (`src/services/standards.js`).** A dropdown in the header chooses Auto, US AQI or India NAQI. Auto uses NAQI when the place is in India. NAQI uses CPCB breakpoints per pollutant; the overall value is the worst sub-index. Open-Meteo and OpenAQ give concentrations directly; WAQI only gives US-scale sub-indices, so those are converted back to concentrations first (flagged as estimated).
 
-**Map.** Open-Meteo is queried on a grid whose spacing depends on zoom (20° down to 0.25°), cached in the browser for 1 hour. The values are interpolated and drawn on a canvas under a separate tile layer that holds the borders and labels. Clicking calls the normal data chain for that point. Map colours come from the model, so they can differ slightly from a nearby station's number.
+**Map.** Live station readings in view are loaded from WAQI and interpolated (inverse-distance weighting) onto a canvas under a separate tile layer holding borders and labels. Colour fades out away from stations, so areas with no station are left uncoloured. Clicking runs the normal live-data lookup for that point. In India NAQI mode the shading is approximated from station values; the click card is exact.
 
-**History and anomalies.** Daily means come from Open-Meteo. Change % = (today − past) ÷ past × 100. An anomaly is flagged when a day's PM2.5 is more than 3 standard deviations above the mean of the previous 7 days.
+**History and anomalies.** Daily PM2.5 and PM10 means are measured at the nearest OpenAQ station. If no station history exists, the page says so and offers an optional, clearly labelled modelled history (Open-Meteo CAMS). Change % = (today − past) ÷ past × 100. An anomaly is flagged when a day's PM2.5 is more than 3 standard deviations above the mean of the previous 7 days.
 
 **AI.** The assistant sends the conversation and the current location's data to Groq and can call a `get_air_quality` tool to fetch live data for any place. The Health page asks Groq for structured JSON advice based on the current readings. In production the key stays on the server (`api/groq.js`).
 
@@ -62,7 +62,8 @@ npm run dev              # http://localhost:5173
 4. Deploy; redeploy after changing variables. `vercel.json` makes page refreshes work.
 
 ## Limits and notes
-- Open-Meteo's free tier allows about 10,000 requests per day; the map grid is cached to stay within it.
+- Only the Forecast page (and the optional modelled history) uses model data (Open-Meteo, free tier about 10,000 requests per day).
+- Places with no monitoring station within range show no live value.
 - WAQI, OpenAQ and Geoapify keys are visible in the browser; restrict Geoapify to your domain.
 - Time shown is when the station last reported, not when the app checked. Some stations report with delays.
 - Health text is general guidance, not medical advice.
