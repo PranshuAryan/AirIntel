@@ -11,12 +11,13 @@ export async function geocode(q){
   const d=await j(`https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(q)}&limit=6&apiKey=${GEO}`);
   return d.features.map(f=>({label:f.properties.formatted,lat:f.properties.lat,lon:f.properties.lon,cc:f.properties.country_code}));
 }
-const when=x=>x.time?.v?new Date(x.time.v*1000).toISOString():(x.time?.iso||x.time?.s),okF=d=>d.status==='ok'&&typeof d.data.aqi==='number';
+const hrs=t=>{const h=(Date.now()-new Date(t))/36e5;return isNaN(h)||h<-0.05?Infinity:h};
+const when=x=>x.time?.v?new Date(x.time.v*1000).toISOString():x.time?.iso,okF=d=>d.status==='ok'&&typeof d.data.aqi==='number';
 async function waqi(lat,lon){
   let x=null;try{const d=await j(`https://api.waqi.info/feed/geo:${lat};${lon}/?token=${WAQI}`);if(okF(d))x=d.data}catch{}
-  if(!x||(Date.now()-new Date(when(x)))/36e5>3){ // nearest station is stale or missing: look for a fresher one nearby
+  if(!x||hrs(when(x))>3){ // nearest station is stale or missing: look for a fresher one nearby
     try{const m=await j(`https://api.waqi.info/v2/map/bounds?latlng=${lat-1},${lon-1},${lat+1},${lon+1}&networks=all&token=${WAQI}`);
-      const c=(m.data||[]).filter(s=>!isNaN(+s.aqi)&&(Date.now()-new Date(s.station.time))/36e5<=3).map(s=>({...s,d:km(lat,lon,s.lat,s.lon)})).sort((a,b)=>a.d-b.d)[0];
+      const c=(m.data||[]).filter(s=>!isNaN(+s.aqi)&&hrs(s.station.time)<=3).map(s=>({...s,d:km(lat,lon,s.lat,s.lon)})).sort((a,b)=>a.d-b.d)[0];
       if(c){const f=await j(`https://api.waqi.info/feed/@${c.uid}/?token=${WAQI}`);if(okF(f))x=f.data}}catch{}
   }
   if(!x)throw new Error('no station data');
@@ -35,7 +36,7 @@ async function openaq(lat,lon){
   const c=[L.coordinates.latitude,L.coordinates.longitude];
   return{source:'OpenAQ Station',type:'MEASUREMENT',station:L.name,distanceKm:km(lat,lon,...c),updated:la.results.map(r=>r.datetime.utc).sort().at(-1),aqi:p.pm25.sub,pollutants:p,coords:c};
 }
-const ageH=a=>(Date.now()-new Date(a.updated))/36e5,fin=(r,errors)=>applyStandard({...r,errors,fetchedAt:new Date().toISOString()});
+const ageH=a=>hrs(a.updated),fin=(r,errors)=>applyStandard({...r,errors,fetchedAt:new Date().toISOString()});
 /* ground measurements only: a reading older than 3 h is stale, the freshest station is shown (flagged) up to 24 h; no model fallback */
 export async function getAirQuality(lat,lon){
   const errors=[];let best=null;
@@ -51,7 +52,7 @@ export async function getAirQuality(lat,lon){
 }
 export async function stations(s,w,n,e){
   const d=await j(`https://api.waqi.info/v2/map/bounds?latlng=${Math.max(-90,s)},${Math.max(-180,w)},${Math.min(90,n)},${Math.min(180,e)}&networks=all&token=${WAQI}`);
-  return(d.data||[]).filter(x=>!isNaN(+x.aqi)&&(!x.station.time||Date.now()-new Date(x.station.time)<864e5)).map(x=>({lat:x.lat,lon:x.lon,aqi:+x.aqi,name:x.station.name,time:x.station.time}));
+  return(d.data||[]).filter(x=>!isNaN(+x.aqi)&&(!x.station.time||hrs(x.station.time)<24)).map(x=>({lat:x.lat,lon:x.lon,aqi:+x.aqi,name:x.station.name,time:x.station.time}));
 }
 export const tileUrl=`https://tiles.waqi.info/tiles/usepa-aqi/{z}/{x}/{y}.png?token=${WAQI}`;
 const avg=a=>{const v=a.filter(x=>x!=null);return v.length?Math.round(v.reduce((s,x)=>s+x,0)/v.length*10)/10:null};
