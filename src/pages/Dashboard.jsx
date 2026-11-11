@@ -1,5 +1,5 @@
-import {useEffect,useState} from 'react';import {FlaskConical,MapPin,Clock,Footprints,ShieldCheck,DoorOpen} from 'lucide-react';
-import {useApp} from '../AppContext.js';import {lv,LV,NAMES} from '../lib.js';import {KEYS} from '../services/apiController.js';
+import {useEffect,useState} from 'react';import {FlaskConical,MapPin,Clock,Footprints,ShieldCheck,DoorOpen,RefreshCw} from 'lucide-react';
+import {useApp} from '../AppContext.js';import {lv,LV,NAMES,ago,fmt} from '../lib.js';import {KEYS} from '../services/apiController.js';
 export const TypeBadge=({type})=>type==='MEASUREMENT'
   ?<span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-semibold"><span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"/><span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"/></span>LIVE GROUND MEASUREMENT</span>
   :<span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-sky-100 text-sky-700 font-semibold"><FlaskConical size={12}/>MODEL ESTIMATE (not a ground reading)</span>;
@@ -10,7 +10,8 @@ const WIN=['Open freely','Open, avoid rush hour','Short airing only','Keep close
 function useCount(t){const[n,setN]=useState(0);
   useEffect(()=>{let raf;const s=performance.now(),tick=now=>{const p=Math.min(1,(now-s)/1000);setN(Math.round(t*(1-Math.pow(1-p,3))));if(p<1)raf=requestAnimationFrame(tick)};raf=requestAnimationFrame(tick);return()=>cancelAnimationFrame(raf)},[t]);return n}
 export default function Dashboard(){
-  const{air,loading,err,place,setPlace}=useApp(),[v,setV]=useState(0),[go,setGo]=useState(false),n=useCount(air?.aqi||0);
+  const{air,loading,err,place,setPlace,refresh}=useApp(),[v,setV]=useState(0),[go,setGo]=useState(false),[,tick]=useState(0),[spin,setSpin]=useState(false),n=useCount(air?.aqi||0);
+  useEffect(()=>{const i=setInterval(()=>tick(x=>x+1),30000);return()=>clearInterval(i)},[]);
   useEffect(()=>{setV(0);setGo(false);const t=setTimeout(()=>{setV(air?.aqi||0);setGo(true)},80);return()=>clearTimeout(t)},[air]);
   const chips=<div className="lg:col-span-2 flex flex-wrap gap-2 items-center text-sm"><span className="text-slate-500">Try:</span>{CITIES.map(([c,lat,lon,cc])=>
     <button key={c} onClick={()=>setPlace({label:c,lat,lon,cc})} className="px-3 py-1 rounded-full bg-white border border-emerald-200 text-emerald-800 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 hover:-translate-y-0.5">{c}</button>)}</div>;
@@ -18,7 +19,7 @@ export default function Dashboard(){
   if(!air)return<div className="max-w-6xl mx-auto p-4 grid gap-4">{chips}<p className="p-10 text-center text-red-600 max-w-xl mx-auto">{err}</p></div>;
   const L=lv(air.aqi),R=90,C=2*Math.PI*R,cur=LV.findIndex(l=>air.aqi<=l[0]);
   return<div className="max-w-6xl mx-auto p-4 grid gap-4 lg:grid-cols-[380px_1fr]">
-    <div className="lg:col-span-2 rise"><h1 className="text-2xl md:text-3xl font-bold text-emerald-900">{place.label}</h1><p className="text-sm text-slate-500">Live air quality · {new Date(air.updated).toLocaleString()}</p></div>
+    <div className="lg:col-span-2 rise"><h1 className="text-2xl md:text-3xl font-bold text-emerald-900">{place.label}</h1><p className="text-sm text-slate-500 flex flex-wrap items-center gap-2">Reported {fmt(air.updated)} ({ago(air.updated)}) · checked {ago(air.fetchedAt)}<button onClick={()=>{setSpin(true);refresh().finally(()=>setSpin(false))}} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-emerald-300 text-emerald-700 hover:bg-emerald-50 text-xs"><RefreshCw size={12} className={spin?'animate-spin':''}/>Refresh</button></p></div>
     {chips}
     <section className="glass p-6 text-center rise" style={{background:`linear-gradient(180deg,${L.color}30,#fff 58%)`}}>
       <svg viewBox="0 0 220 220" className="mx-auto w-64" style={{filter:`drop-shadow(0 8px 16px ${L.color}66)`}} role="img" aria-label={`AQI ${air.aqi}, ${L.name}`}>
@@ -31,7 +32,7 @@ export default function Dashboard(){
         <TypeBadge type={air.type}/>
         <p><b>Source:</b> {air.source}</p><p className="flex gap-1"><MapPin size={15} className="mt-0.5 shrink-0 text-emerald-600"/>{air.station}</p>
         {air.type==='MEASUREMENT'&&<p><b>Distance:</b> {air.distanceKm} km {air.distanceKm>1?'(nearest station used)':'(at location)'}</p>}
-        <p className="flex gap-1 items-center"><Clock size={15} className="text-emerald-600"/>{air.updated}</p>
+        <p className="flex gap-1 items-center"><Clock size={15} className="text-emerald-600"/>{fmt(air.updated)} · {ago(air.updated)}</p><p className="text-[11px] text-slate-400 font-mono break-all">{air.updated}</p>{(air.stale||(air.type==='MEASUREMENT'&&Date.now()-new Date(air.updated)>108e5))&&<p className="text-xs text-amber-700">This station last reported {ago(air.updated)}. The freshest source available is shown.</p>}
         {air.converted&&<p className="text-xs text-amber-700">NAQI estimated by converting this station's US-scale readings.</p>}{air.dominant&&<p className="text-xs opacity-70">Dominant pollutant: {NAMES[air.dominant]}</p>}
         {air.errors.length>0&&<p className="text-xs opacity-50">Fallback used — {air.errors.join(' • ')}</p>}</div></section>
     <div className="space-y-4">

@@ -12,7 +12,9 @@ export default function App(){
   const locate=()=>navigator.geolocation?.getCurrentPosition(async p=>{const{latitude:lat,longitude:lon}=p.coords;let label='Your location',cc;try{({label,cc}=await reverseGeocode(lat,lon))}catch{}setPlace({label,lat,lon,cc})},()=>alert('Location permission denied. Use the search bar instead.'));
   useEffect(()=>{locate()},[]);
   useEffect(()=>{setLoading(true);setErr('');getAirQuality(place.lat,place.lon).then(setAir).catch(e=>{setAir(null);setErr(e.message)}).finally(()=>setLoading(false))},[place,std]);
-  return<Ctx.Provider value={{place,setPlace,air,loading,err,std}}><BrowserRouter>
+  const refresh=()=>getAirQuality(place.lat,place.lon).then(setAir).catch(()=>{});
+  useEffect(()=>{const id=setInterval(refresh,6e5),vis=()=>{if(document.visibilityState==='visible'&&air&&Date.now()-new Date(air.fetchedAt)>3e5)refresh()};document.addEventListener('visibilitychange',vis);return()=>{clearInterval(id);document.removeEventListener('visibilitychange',vis)}},[place,std,air]);
+  return<Ctx.Provider value={{place,setPlace,air,loading,err,std,refresh}}><BrowserRouter>
     <header className="sticky top-0 z-[1500] bg-white/95 backdrop-blur border-b border-emerald-100 shadow-sm">
       <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col md:flex-row gap-3 md:items-center">
         <div className="flex items-center gap-2 shrink-0"><span className="bg-emerald-600 text-white p-2 rounded-xl shadow-md shadow-emerald-600/30 transition-transform duration-300 hover:rotate-12 hover:scale-110"><Wind size={20}/></span>

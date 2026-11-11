@@ -5,3 +5,5 @@ export const setScale=s=>{SCALE=s==='in'?'in':'us';LV=SCALE==='in'?IN:US};
 export const getScale=()=>SCALE;
 export const lv=a=>{const l=LV.find(l=>a<=l[0])||LV[5];return{name:l[1],color:l[2],note:l[3],text:l[4]}};
 export const NAMES={pm25:'PM2.5',pm10:'PM10',no2:'NO₂',so2:'SO₂',co:'CO',o3:'O₃'};
+export const ago=iso=>{const m=Math.max(0,Math.round((Date.now()-new Date(iso))/6e4));return isNaN(m)?'':m<1?'just now':m<60?`${m} min ago`:m<1440?`${Math.floor(m/60)} h ${m%60} min ago`:`${Math.floor(m/1440)} d ago`};
+export const fmt=iso=>isNaN(new Date(iso))?String(iso):new Date(iso).toLocaleString([],{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
