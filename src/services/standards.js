@@ -21,11 +21,12 @@ export function toConc(k,v,unit){const u=(unit||'').toLowerCase();if(k==='pm25'|
   return u.includes('ppm')?v*1000*FACT[k]:u.includes('ppb')?v*FACT[k]:v}
 let STD='us';export const getStandard=()=>STD;export const setStandard=s=>{STD=s==='in'?'in':'us';setScale(STD)};
 export function applyStandard(a){
-  if(STD!=='in')return{...a,std:'us'};
+  const altNaqi=(()=>{let b=null;KEYS.forEach(k=>{const o=a.pollutants[k];if(o&&o.conc!=null){const v=naqi(k,o.conc);if(v!=null&&(b==null||v>b))b=v}});return b})();
+  if(STD!=='in')return{...a,std:'us',usAqi:a.aqi,naqiAqi:altNaqi};
   const p={};let best=null;
   KEYS.forEach(k=>{const o=a.pollutants[k];if(!o||o.conc==null)return;const sub=naqi(k,o.conc);
     p[k]={value:+o.conc.toFixed(k==='co'?2:1),unit:k==='co'?'mg/m³':'µg/m³',sub,conc:o.conc};if(sub!=null&&(!best||sub>best.sub))best={k,sub}});
   if(!best)return{...a,std:'us'};
-  return{...a,std:'in',pollutants:p,aqi:best.sub,dominant:best.k,converted:a.source.startsWith('WAQI')};
+  return{...a,std:'in',usAqi:a.aqi,naqiAqi:best.sub,pollutants:p,aqi:best.sub,dominant:best.k,converted:a.source.startsWith('WAQI')};
 }
 export const usIndex=(k,x)=>{const bp=US_BP[k];if(x==null||!bp)return null;const b=bp.find(b=>x<=b[1])||bp.at(-1);return Math.round(Math.min(500,(b[3]-b[2])/(b[1]-b[0])*(x-b[0])+b[2]))};

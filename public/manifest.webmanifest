@@ -1,0 +1,23 @@
+{
+ "name": "AirIntel",
+ "short_name": "AirIntel",
+ "description": "Live air quality and a personalised clean-air plan for families and communities.",
+ "start_url": "/",
+ "display": "standalone",
+ "background_color": "#09100d",
+ "theme_color": "#047857",
+ "icons": [
+  {
+   "src": "/icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any maskable"
+  },
+  {
+   "src": "/icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any maskable"
+  }
+ ]
+}

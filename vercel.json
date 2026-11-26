@@ -1,6 +1,7 @@
 {
   "rewrites": [{"source": "/((?!api/).*)", "destination": "/index.html"}],
   "headers": [
+    {"source": "/sw.js", "headers": [{"key": "Cache-Control", "value": "no-cache"}]},
     {"source": "/(.*)", "headers": [
       {"key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://server.arcgisonline.com https://*.tile.openstreetmap.org; connect-src 'self' https://api.waqi.info https://api.openaq.org https://air-quality-api.open-meteo.com https://api.geoapify.com https://server.arcgisonline.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"},
       {"key": "X-Content-Type-Options", "value": "nosniff"},

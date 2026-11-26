@@ -1,6 +1,6 @@
 import {lazy, Suspense, useCallback, useEffect, useRef, useState} from 'react';
 import {BrowserRouter, NavLink, Route, Routes, useLocation} from 'react-router-dom';
-import {Gauge, Map as MapIcon, GitCompare, History, HeartPulse, CloudSun, Bot, Wind, LocateFixed, Leaf, X, Sun, Moon} from 'lucide-react';
+import {Gauge, Map as MapIcon, GitCompare, History, HeartPulse, CloudSun, Bot, Wind, LocateFixed, Leaf, X, Sun, Moon, Users, House} from 'lucide-react';
 import {Ctx} from './AppContext.js';
 import {setStandard} from './services/standards.js';
 import {getAirQuality, reverseGeocode} from './services/apiController.js';
@@ -11,6 +11,8 @@ import Dashboard from './pages/Dashboard.jsx';
 
 // Everything except the landing page is code-split: charts and the map only download when visited.
 const Plan = lazy(() => import('./pages/Plan.jsx'));
+const Family = lazy(() => import('./pages/Family.jsx'));
+const Indoor = lazy(() => import('./pages/Indoor.jsx'));
 const InteractiveMap = lazy(() => import('./pages/InteractiveMap.jsx'));
 const Compare = lazy(() => import('./pages/Compare.jsx'));
 const Historical = lazy(() => import('./pages/Historical.jsx'));
@@ -18,7 +20,7 @@ const Health = lazy(() => import('./pages/Health.jsx'));
 const Forecast = lazy(() => import('./pages/Forecast.jsx'));
 const AIAssistant = lazy(() => import('./pages/AIAssistant.jsx'));
 
-const NAV = [['/', Gauge, 'Live AQI'], ['/plan', Leaf, 'Clean-Air Plan'], ['/map', MapIcon, 'Map'], ['/compare', GitCompare, 'Compare'], ['/historical', History, 'History'], ['/health', HeartPulse, 'Health'], ['/forecast', CloudSun, 'Forecast'], ['/assistant', Bot, 'Assistant']];
+const NAV = [['/', Gauge, 'Live AQI'], ['/plan', Leaf, 'Clean-Air Plan'], ['/family', Users, 'Family'], ['/indoor', House, 'Indoor'], ['/map', MapIcon, 'Map'], ['/compare', GitCompare, 'Compare'], ['/historical', History, 'History'], ['/health', HeartPulse, 'Health'], ['/forecast', CloudSun, 'Forecast'], ['/assistant', Bot, 'Assistant']];
 const safeGet = (k, d) => { try { return localStorage.getItem(k) || d; } catch { return d; } };
 const safeSet = (k, v) => { try { localStorage.setItem(k, v); } catch { /* storage unavailable */ } };
 
@@ -38,7 +40,7 @@ function Pages({announce}) {
         <Suspense fallback={<div role="status" aria-label="Loading page" className="max-w-6xl mx-auto p-4"><div className="skeleton h-64"/></div>}>
           <div key={pathname} className="page">
             <Routes>
-              <Route path="/" element={<Dashboard/>}/><Route path="/plan" element={<Plan/>}/><Route path="/map" element={<InteractiveMap/>}/>
+              <Route path="/" element={<Dashboard/>}/><Route path="/plan" element={<Plan/>}/><Route path="/family" element={<Family/>}/><Route path="/indoor" element={<Indoor/>}/><Route path="/map" element={<InteractiveMap/>}/>
               <Route path="/compare" element={<Compare/>}/><Route path="/historical" element={<Historical/>}/><Route path="/health" element={<Health/>}/>
               <Route path="/forecast" element={<Forecast/>}/><Route path="/assistant" element={<AIAssistant/>}/>
             </Routes>

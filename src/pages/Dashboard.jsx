@@ -30,6 +30,7 @@ export default function Dashboard(){
       <p className="text-xl font-bold" style={{color:L.text}}>{L.name}</p><p className="text-sm text-slate-700 mt-1">{L.note}</p>
       <div className="mt-4 text-left text-sm space-y-2 border-t border-emerald-100 pt-4">
         <TypeBadge type={air.type}/>
+        {air.usAqi!=null&&air.naqiAqi!=null&&<p className="text-xs rounded-lg bg-emerald-50 p-2 text-slate-700"><b>Same air, two scales:</b> India NAQI {air.naqiAqi} · US AQI {air.usAqi}. Apps differ because the two standards use different pollutant limits and category cut-offs.</p>}
         <p><b>Source:</b> {air.source}</p><p className="flex gap-1"><MapPin size={15} className="mt-0.5 shrink-0 text-emerald-600"/>{air.station}</p>
         {air.type==='MEASUREMENT'&&<p><b>Distance:</b> {air.distanceKm} km {air.distanceKm>1?'(nearest station used)':'(at location)'}</p>}
         <p className="flex gap-1 items-center"><Clock size={15} className="text-emerald-600"/>{fmt(air.updated)} · {ago(air.updated)}</p><p className="text-[11px] text-slate-600 font-mono break-all">{air.updated}</p>{(air.stale||(air.type==='MEASUREMENT'&&Date.now()-new Date(air.updated)>108e5))&&<p className="text-xs text-amber-700">This station last reported {ago(air.updated)}. The freshest source available is shown.</p>}

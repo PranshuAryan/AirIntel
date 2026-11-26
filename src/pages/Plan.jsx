@@ -154,6 +154,7 @@ export default function Plan() {
               {st.totalActions > 0 && <p className="text-xs text-slate-700 mt-2 flex flex-wrap items-center gap-x-2"><Flame size={14} className="text-orange-600" aria-hidden="true"/><b>{st.streak}-day streak</b><span>· {st.totalActions} actions done · ≈ {st.totalCo2} kg CO₂ avoided (estimate)</span>
                 <button onClick={clearHistory} className="underline text-slate-600 hover:text-slate-900">Clear history</button></p>}</div>
             <button onClick={copy} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-emerald-700 text-emerald-900 text-sm hover:bg-emerald-50"><Copy size={14} aria-hidden="true"/>Copy plan</button>
+            <a href={`https://wa.me/?text=${encodeURIComponent(planToText(plan, place.label).slice(0, 1800))}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-emerald-700 text-emerald-900 text-sm hover:bg-emerald-50">Share on WhatsApp<span className="sr-only"> (opens in a new tab)</span></a>
             {typeof navigator !== 'undefined' && navigator.share && <button onClick={share} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-emerald-700 text-white text-sm hover:bg-emerald-800"><Share2 size={14} aria-hidden="true"/>Share with household</button>}
             <p role="status" className="w-full text-xs text-slate-700 min-h-[1rem]">{msg}</p>
           </div>
