@@ -1,5 +1,7 @@
 import {useEffect, useMemo, useState} from 'react';
-import {Leaf, Sparkles, Clock, Copy, Share2, Home, Users, Car, Wallet, FlaskConical, CircleHelp} from 'lucide-react';
+import {Leaf, Sparkles, Clock, Copy, Share2, Home, Users, Car, Wallet, FlaskConical, CircleHelp, Flame} from 'lucide-react';
+import HourlyStrip from '../components/HourlyStrip.jsx';
+import {loadProgress, saveProgress, recordDay, stats, todayKey} from '../services/progress.js';
 import {useApp} from '../AppContext.js';
 import {lv} from '../lib.js';
 import {hourlyForecast} from '../services/apiController.js';
@@ -67,11 +69,13 @@ function ActionCard({a, done, toggle}) {
 export default function Plan() {
   const {place, air, loading, err, profile, setProfile} = useApp();
   const [win, setWin] = useState(null), [aiState, setAiState] = useState(null), [busy, setBusy] = useState(false);
-  const [done, setDone] = useState({}), [msg, setMsg] = useState('');
+  const [rows, setRows] = useState([]), [store, setStore] = useState(loadProgress), [msg, setMsg] = useState('');
+  const tk = todayKey();
+  const done = useMemo(() => Object.fromEntries((store.days[tk]?.done || []).map(i => [i, true])), [store, tk]);
 
   useEffect(() => {
-    let live = true; setWin(null);
-    hourlyForecast(place.lat, place.lon, 24).then(r => live && setWin(bestWindow(r))).catch(() => {});
+    let live = true; setWin(null); setRows([]);
+    hourlyForecast(place.lat, place.lon, 24).then(r => { if (live) { setRows(r); setWin(bestWindow(r)); } }).catch(() => {});
     return () => { live = false; };
   }, [place]);
 
@@ -94,7 +98,13 @@ export default function Plan() {
   const L = air ? lv(air.aqi) : null;
   const total = plan.actions.length, nDone = plan.actions.filter(a => done[a.id]).length;
   const co2Saved = Math.max(0, ...plan.actions.filter(a => done[a.id] && a.co2).map(a => a.co2));
-  const toggle = id => setDone(d => ({...d, [id]: !d[id]}));
+  const st = stats(store, tk);
+  const toggle = id => {
+    const ids = new Set(Object.keys(done)); ids.has(id) ? ids.delete(id) : ids.add(id);
+    const co2 = Math.max(0, ...plan.actions.filter(a => ids.has(a.id) && a.co2).map(a => a.co2));
+    const next = recordDay(store, tk, [...ids], co2); saveProgress(next); setStore(next);
+  };
+  const clearHistory = () => { const e = {days: {}}; saveProgress(e); setStore(e); };
 
   const copy = async () => {
     try { await navigator.clipboard.writeText(planToText(plan, place.label)); setMsg('Plan copied. Paste it into your family or neighbourhood group.'); }
@@ -130,16 +140,19 @@ export default function Plan() {
           {win && (
             <section className="glass p-4 flex items-start gap-3" aria-label="Cleanest time to go out">
               <Clock className="text-emerald-700 mt-0.5 shrink-0" aria-hidden="true"/>
-              <div className="text-sm"><p className="font-semibold text-slate-900">Cleanest window in the next 24 h: {win.label}</p>
+              <div className="text-sm flex-1 min-w-0"><p className="font-semibold text-slate-900">Cleanest window in the next 24 h: {win.label}</p>
                 <p className="text-slate-700">Forecast PM2.5 about {win.avg} µg/m³, versus about {win.peak} µg/m³ around {win.peakLabel} (~{win.cutPct}% lower). Good time for walks, school runs and airing rooms.</p>
-                <span className="inline-flex items-center gap-1 mt-1 text-[11px] px-2 py-0.5 rounded-full bg-sky-100 text-sky-900 font-semibold"><FlaskConical size={11} aria-hidden="true"/>MODEL FORECAST, not a ground reading</span></div>
+                <span className="inline-flex items-center gap-1 mt-1 text-[11px] px-2 py-0.5 rounded-full bg-sky-100 text-sky-900 font-semibold"><FlaskConical size={11} aria-hidden="true"/>MODEL FORECAST, not a ground reading</span>
+                <HourlyStrip rows={rows} win={win}/></div>
             </section>
           )}
 
           <div className="glass p-4 flex flex-wrap items-center gap-3">
             <div className="flex-1 min-w-[180px]"><p className="text-sm font-medium text-slate-800" id="prog-l">{nDone} of {total} actions done today</p>
               <div role="progressbar" aria-labelledby="prog-l" aria-valuemin={0} aria-valuemax={total} aria-valuenow={nDone} className="mt-1 h-2 rounded-full bg-slate-100 overflow-hidden"><div className="h-full bg-emerald-600 transition-all" style={{width: total ? `${nDone / total * 100}%` : 0}}/></div>
-              {co2Saved > 0 && <p className="text-xs text-emerald-900 mt-1">Your commute change avoids about {co2Saved} kg CO₂ per working day.</p>}</div>
+              {co2Saved > 0 && <p className="text-xs text-emerald-900 mt-1">Your commute change avoids about {co2Saved} kg CO₂ per working day.</p>}
+              {st.totalActions > 0 && <p className="text-xs text-slate-700 mt-2 flex flex-wrap items-center gap-x-2"><Flame size={14} className="text-orange-600" aria-hidden="true"/><b>{st.streak}-day streak</b><span>· {st.totalActions} actions done · ≈ {st.totalCo2} kg CO₂ avoided (estimate)</span>
+                <button onClick={clearHistory} className="underline text-slate-600 hover:text-slate-900">Clear history</button></p>}</div>
             <button onClick={copy} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-emerald-700 text-emerald-900 text-sm hover:bg-emerald-50"><Copy size={14} aria-hidden="true"/>Copy plan</button>
             {typeof navigator !== 'undefined' && navigator.share && <button onClick={share} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-emerald-700 text-white text-sm hover:bg-emerald-800"><Share2 size={14} aria-hidden="true"/>Share with household</button>}
             <p role="status" className="w-full text-xs text-slate-700 min-h-[1rem]">{msg}</p>

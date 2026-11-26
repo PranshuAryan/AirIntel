@@ -18,7 +18,7 @@ vi.mock('../src/services/apiController.js', () => ({
 }));
 vi.mock('../src/services/groq.js', () => ({askJSON: vi.fn(async () => { throw new Error('Groq key missing'); })}));
 
-afterEach(cleanup);
+afterEach(() => { cleanup(); localStorage.clear(); });
 const A11Y = {rules: {'color-contrast': {enabled: false}}}; // jsdom cannot compute colours; contrast is handled in the design tokens
 const FUTURE = {v7_startTransition: true, v7_relativeSplatPath: true};
 
@@ -116,5 +116,23 @@ describe('Clean-Air Plan page', () => {
     const {container} = renderPlan();
     await screen.findByText(/Cleanest window/);
     expect((await axe(container, A11Y)).violations).toEqual([]);
+  });
+});
+
+describe('Streak tracker and hourly strip', () => {
+  it('persists completed actions and shows a streak', async () => {
+    const user = userEvent.setup();
+    renderPlan();
+    await user.click(screen.getAllByRole('checkbox').find(b => b.id.startsWith('act-')));
+    expect(screen.getByText(/1-day streak/)).toBeTruthy();
+    cleanup();
+    renderPlan(); // remount: today's progress is restored from storage
+    expect(screen.getByText(/1 of \d+ actions done/)).toBeTruthy();
+  });
+  it('renders one bar per forecast hour with a text alternative', async () => {
+    renderPlan();
+    const img = await screen.findByRole('img', {name: /hourly pm2\.5 forecast/i});
+    expect(img.children).toHaveLength(7);
+    expect(screen.getByRole('table', {name: /hourly pm2\.5 forecast/i})).toBeTruthy();
   });
 });

@@ -106,7 +106,7 @@ export default function App() {
               <button onClick={locate} title="Use my location" aria-label="Use my location" className="glass px-3 text-emerald-800 hover:bg-emerald-50"><LocateFixed size={18} aria-hidden="true"/></button>
             </div>
           </div>
-          <nav aria-label="Primary" className="max-w-6xl mx-auto px-4 pb-2 flex gap-1 overflow-x-auto">
+          <nav aria-label="Primary" className="max-w-6xl mx-auto px-4 pb-2 flex gap-1 overflow-x-auto [&>:first-child]:ml-auto [&>:last-child]:mr-auto">
             {NAV.map(([to, I, t]) => (
               <NavLink key={to} to={to} end className={({isActive}) => `flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 hover:-translate-y-0.5 ${isActive ? 'bg-emerald-700 text-white' : 'text-slate-700 hover:bg-emerald-50'}`}><I size={15} aria-hidden="true"/>{t}</NavLink>
             ))}
