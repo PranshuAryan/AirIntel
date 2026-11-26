@@ -1,0 +1,27 @@
+@tailwind base;@tailwind components;@tailwind utilities;
+html{scroll-behavior:smooth}
+body{background:radial-gradient(900px 400px at 85% -5%,#d1fae5 0,transparent 60%),radial-gradient(700px 380px at 0% 0%,#ecfccb 0,transparent 55%),#f7fbf8 fixed;color:#1e293b;font-family:Outfit,sans-serif;min-height:100vh}
+.glass{@apply bg-white border border-emerald-100 rounded-2xl shadow-sm;transition:box-shadow .3s,border-color .3s}
+.glass:hover{box-shadow:0 10px 30px -14px rgba(5,150,105,.35);border-color:#a7f3d0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pop{from{opacity:0;transform:scale(.95) translateY(6px)}to{opacity:1;transform:none}}
+@keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+@keyframes dots{0%,80%,100%{transform:scale(.55);opacity:.4}40%{transform:scale(1);opacity:1}}
+@keyframes pr{0%{r:6px;opacity:.8}100%{r:26px;opacity:0}}
+.page{animation:fadeIn .4s ease backwards}
+.fade{animation:fadeIn .8s .3s ease backwards}
+.rise{animation:fadeUp .6s cubic-bezier(.2,.7,.2,1) backwards}
+.pop{animation:pop .3s cubic-bezier(.2,.7,.2,1) backwards}
+.stagger>*{animation:fadeUp .6s cubic-bezier(.2,.7,.2,1) backwards}
+.stagger>*:nth-child(2){animation-delay:.06s}.stagger>*:nth-child(3){animation-delay:.12s}.stagger>*:nth-child(4){animation-delay:.18s}
+.stagger>*:nth-child(5){animation-delay:.24s}.stagger>*:nth-child(6){animation-delay:.3s}.stagger>*:nth-child(7){animation-delay:.36s}.stagger>*:nth-child(n+8){animation-delay:.42s}
+.lift{transition:transform .25s,box-shadow .25s}.lift:hover{transform:translateY(-4px);box-shadow:0 14px 30px -14px rgba(5,150,105,.45)}
+.skeleton{background:linear-gradient(90deg,#e6f4ec 25%,#f5fbf8 40%,#e6f4ec 60%);background-size:1200px 100%;animation:shimmer 1.5s infinite linear;border-radius:1rem}
+.pin-pulse{animation:pr 1.8s ease-out infinite}
+.leaflet-popup-content-wrapper{border-radius:18px;box-shadow:0 16px 40px -10px rgba(0,0,0,.3);animation:pop .3s ease backwards}
+.leaflet-popup-content{margin:14px 16px}
+::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#a7d7bd;border-radius:8px}::-webkit-scrollbar-track{background:transparent}
+:focus-visible{outline:2px solid #10b981;outline-offset:2px}
+button{transition:transform .15s,background-color .2s,opacity .2s}button:active:not(:disabled){transform:scale(.96)}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
