@@ -1,6 +1,6 @@
 import {lazy, Suspense, useCallback, useEffect, useRef, useState} from 'react';
 import {BrowserRouter, NavLink, Route, Routes, useLocation} from 'react-router-dom';
-import {Gauge, Map as MapIcon, GitCompare, History, HeartPulse, CloudSun, Bot, Wind, LocateFixed, Leaf, X} from 'lucide-react';
+import {Gauge, Map as MapIcon, GitCompare, History, HeartPulse, CloudSun, Bot, Wind, LocateFixed, Leaf, X, Sun, Moon} from 'lucide-react';
 import {Ctx} from './AppContext.js';
 import {setStandard} from './services/standards.js';
 import {getAirQuality, reverseGeocode} from './services/apiController.js';
@@ -54,6 +54,12 @@ export default function App() {
   const [air, setAir] = useState(null), [loading, setLoading] = useState(true), [err, setErr] = useState('');
   const [mode, setMode] = useState(() => safeGet('aqmode', 'auto'));
   const [profile, setProfileState] = useState(loadProfile);
+  const [theme, setTheme] = useState(() => (document.documentElement.classList.contains('dark') ? 'dark' : 'light'));
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#09100d' : '#047857');
+    safeSet('aqtheme', theme);
+  }, [theme]);
   const [notice, setNotice] = useState(''), [announcement, announce] = useState('');
   const std = mode === 'auto' ? (place.cc === 'in' ? 'in' : 'us') : mode;
   setStandard(std); // idempotent module-level setting read by the AQI helpers
@@ -89,13 +95,14 @@ export default function App() {
           <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col md:flex-row gap-3 md:items-center">
             <div className="flex items-center gap-2 shrink-0">
               <span className="bg-emerald-700 text-white p-2 rounded-xl shadow-md shadow-emerald-700/30 transition-transform duration-300 hover:rotate-12 hover:scale-110" aria-hidden="true"><Wind size={20}/></span>
-              <div className="leading-tight"><p className="font-bold text-lg text-emerald-900">AirIntel</p><p className="text-[11px] text-slate-600">Real-time air quality</p></div>
+              <div className="leading-tight"><p className="font-bold text-lg grad-text">AirIntel</p><p className="text-[11px] text-slate-600">Real-time air quality</p></div>
             </div>
             <div className="md:flex-1 flex gap-2">
               <SearchBox onSelect={setPlace}/>
               <select value={mode} onChange={e => { setMode(e.target.value); safeSet('aqmode', e.target.value); }} aria-label="AQI standard" className="glass px-2 text-sm text-emerald-900 bg-white">
                 <option value="auto">Auto · {std === 'in' ? 'NAQI' : 'US'}</option><option value="us">US AQI</option><option value="in">India NAQI</option>
               </select>
+              <button onClick={() => setTheme(t => (t === 'dark' ? 'light' : 'dark'))} aria-pressed={theme === 'dark'} title="Toggle dark mode" aria-label="Dark mode" className="glass px-3 text-emerald-800 hover:bg-emerald-50">{theme === 'dark' ? <Sun size={18} aria-hidden="true"/> : <Moon size={18} aria-hidden="true"/>}</button>
               <button onClick={locate} title="Use my location" aria-label="Use my location" className="glass px-3 text-emerald-800 hover:bg-emerald-50"><LocateFixed size={18} aria-hidden="true"/></button>
             </div>
           </div>

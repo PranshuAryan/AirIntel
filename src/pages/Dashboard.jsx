@@ -21,7 +21,7 @@ export default function Dashboard(){
   return<div className="max-w-6xl mx-auto p-4 grid gap-4 lg:grid-cols-[380px_1fr]">
     <div className="lg:col-span-2 rise"><h1 className="text-2xl md:text-3xl font-bold text-emerald-900">{place.label}</h1><p className="text-sm text-slate-600 flex flex-wrap items-center gap-2">Reported {fmt(air.updated)} ({ago(air.updated)}) · checked {ago(air.fetchedAt)}<button onClick={()=>{setSpin(true);refresh().finally(()=>setSpin(false))}} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-emerald-300 text-emerald-700 hover:bg-emerald-50 text-xs"><RefreshCw size={12} className={spin?'animate-spin':''}/>Refresh</button></p></div>
     {chips}
-    <section className="glass p-6 text-center rise" style={{background:`linear-gradient(180deg,${L.color}30,#fff 58%)`}}>
+    <section className="glass p-6 text-center rise" style={{background:`linear-gradient(180deg,${L.color}30,var(--surface) 58%)`}}>
       <svg viewBox="0 0 220 220" className="mx-auto w-64" style={{filter:`drop-shadow(0 8px 16px ${L.color}66)`}} role="img" aria-label={`${air.std==='in'?'India NAQI':'US AQI'} ${air.aqi}, ${L.name}`}>
         <circle cx="110" cy="110" r={R} fill="none" stroke="#e2e8f0" strokeWidth="16"/>
         <circle cx="110" cy="110" r={R} fill="none" stroke={L.color} strokeWidth="16" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C*(1-Math.min(v,500)/500)} transform="rotate(-90 110 110)" style={{transition:'stroke-dashoffset 1.4s cubic-bezier(.2,.7,.2,1), stroke .6s'}}/>

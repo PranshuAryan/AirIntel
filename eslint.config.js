@@ -4,7 +4,7 @@ import hooks from 'eslint-plugin-react-hooks';
 import a11y from 'eslint-plugin-jsx-a11y';
 
 export default [
-  {ignores: ['dist', 'node_modules']},
+  {ignores: ['dist', 'node_modules', 'public']},
   js.configs.recommended,
   a11y.flatConfigs.recommended,
   {

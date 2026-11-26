@@ -25,3 +25,69 @@ body{background:radial-gradient(900px 400px at 85% -5%,#d1fae5 0,transparent 60%
 :focus-visible{outline:2px solid #10b981;outline-offset:2px}
 button{transition:transform .15s,background-color .2s,opacity .2s}button:active:not(:disabled){transform:scale(.96)}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* ---------- theme tokens + brand ---------- */
+:root{--surface:#fff}
+.grad-text{background:linear-gradient(90deg,#047857,#4d7c0f);-webkit-background-clip:text;background-clip:text;color:transparent}
+/* ---------- dark theme (toggle in header; class set by /theme-init.js before first paint) ---------- */
+html.dark{color-scheme:dark;--surface:#111c18}
+.dark body{background:radial-gradient(900px 420px at 85% -5%,rgba(16,185,129,.18) 0,transparent 60%),radial-gradient(700px 380px at 0% 0%,rgba(132,204,22,.08) 0,transparent 55%),#09100d fixed;color:#e2e8f0}
+.dark .grad-text{background-image:linear-gradient(90deg,#6ee7b7,#bef264)}
+.dark .glass{background:#111c18;border-color:#1f3a30;box-shadow:0 8px 28px -14px rgba(0,0,0,.7)}
+.dark .glass:hover{border-color:#2f6f57;box-shadow:0 0 0 1px rgba(52,211,153,.12),0 12px 34px -14px rgba(16,185,129,.35)}
+.dark .lift:hover{box-shadow:0 14px 30px -14px rgba(16,185,129,.5)}
+.dark .bg-white{background:#111c18}.dark .bg-white\/95{background:rgba(9,16,13,.92)}
+.dark .bg-slate-50,.dark .bg-slate-100{background:#1a2823}
+.dark .bg-emerald-50{background:#12261f}.dark .bg-emerald-50\/60{background:rgba(18,38,31,.7)}.dark .bg-emerald-100{background:#17352a}
+.dark .bg-sky-100{background:#0c2a3a}.dark .bg-violet-100{background:#2a1f4a}.dark .bg-amber-50{background:#2b2410}.dark .bg-amber-100{background:#3a300f}
+.dark .text-slate-900{color:#f1f5f9}.dark .text-slate-800{color:#e2e8f0}.dark .text-slate-700{color:#cbd5e1}.dark .text-slate-600{color:#a8b5c4}
+.dark .text-emerald-950,.dark .text-emerald-900{color:#d1fae5}.dark .text-emerald-800{color:#a7f3d0}.dark .text-emerald-700,.dark .text-emerald-600{color:#34d399}
+.dark .text-red-500,.dark .text-red-600,.dark .text-red-700{color:#fca5a5}
+.dark .text-sky-700,.dark .text-sky-900{color:#7dd3fc}.dark .text-violet-900{color:#c4b5fd}
+.dark .text-amber-700,.dark .text-amber-800,.dark .text-amber-900{color:#fcd34d}
+.dark .border-emerald-100,.dark .border-emerald-200{border-color:#1f3a30}.dark .border-emerald-300{border-color:#2a5444}
+.dark .border-slate-300{border-color:#3b4a56}.dark .border-red-100{border-color:#5b2323}.dark .border-amber-300{border-color:#6b5514}
+.dark .border-red-500\/60{border-color:rgba(239,68,68,.6)}
+.dark .ring-slate-800{--tw-ring-color:#e2e8f0}
+/* hover states must be re-declared: the base overrides above would otherwise win */
+.dark .hover\:bg-emerald-50:hover{background:#17352a}.dark .hover\:bg-amber-100:hover{background:#4a3d12}
+.dark .hover\:bg-emerald-700:hover{background:#047857}.dark .hover\:bg-emerald-800:hover{background:#065f46}
+.dark .hover\:text-white:hover{color:#fff}.dark .hover\:border-emerald-700:hover{border-color:#047857}
+.dark input,.dark select,.dark textarea{color:#e2e8f0}.dark option{background:#111c18;color:#e2e8f0}
+.dark ::placeholder{color:#8493a3}
+.dark .skeleton{background:linear-gradient(90deg,#14231d 25%,#1b2f27 40%,#14231d 60%);background-size:1200px 100%}
+.dark ::-webkit-scrollbar-thumb{background:#2a5444}
+.dark :focus-visible{outline-color:#34d399}
+/* map + charts */
+.dark .leaflet-popup-content-wrapper,.dark .leaflet-popup-tip{background:#111c18;color:#e2e8f0}
+.dark .leaflet-container a.leaflet-popup-close-button{color:#cbd5e1}
+.dark .leaflet-bar a{background:#111c18;color:#e2e8f0;border-color:#1f3a30}
+.dark .leaflet-control-attribution{background:rgba(9,16,13,.75)!important;color:#a8b5c4}.dark .leaflet-control-attribution a{color:#6ee7b7}
+.dark .recharts-cartesian-grid line,.dark .recharts-polar-grid-concentric-polygon,.dark .recharts-polar-grid-angle line{stroke:#26362f}
+.dark .recharts-cartesian-axis-tick text,.dark .recharts-polar-angle-axis-tick text,.dark .recharts-polar-radius-axis-tick text{fill:#a8b5c4!important}
+.dark .recharts-legend-item-text{color:#cbd5e1!important}
+.dark .recharts-default-tooltip{background:#111c18!important;border-color:#1f3a30!important}.dark .recharts-tooltip-label,.dark .recharts-tooltip-item{color:#e2e8f0!important}
+.dark circle[stroke="#e2e8f0"]{stroke:#26362f}
+/* AQI level colours chosen for white backgrounds -> lighter equivalents on dark */
+.dark [style*="color: rgb(21, 128, 61)"]{color:#4ade80!important}
+.dark text[fill="#15803d"]{fill:#4ade80}
+.dark [style*="color: rgb(22, 101, 52)"]{color:#4ade80!important}
+.dark text[fill="#166534"]{fill:#4ade80}
+.dark [style*="color: rgb(161, 98, 7)"]{color:#facc15!important}
+.dark text[fill="#a16207"]{fill:#facc15}
+.dark [style*="color: rgb(194, 65, 12)"]{color:#fb923c!important}
+.dark text[fill="#c2410c"]{fill:#fb923c}
+.dark [style*="color: rgb(185, 28, 28)"]{color:#f87171!important}
+.dark text[fill="#b91c1c"]{fill:#f87171}
+.dark [style*="color: rgb(126, 34, 206)"]{color:#c084fc!important}
+.dark text[fill="#7e22ce"]{fill:#c084fc}
+.dark [style*="color: rgb(126, 0, 35)"]{color:#fb7185!important}
+.dark text[fill="#7e0023"]{fill:#fb7185}
+.dark [style*="color: rgb(77, 124, 15)"]{color:#a3e635!important}
+.dark text[fill="#4d7c0f"]{fill:#a3e635}
+.dark [style*="color: rgb(127, 29, 29)"]{color:#f87171!important}
+.dark text[fill="#7f1d1d"]{fill:#f87171}
+.dark [style*="color: rgb(157, 23, 77)"]{color:#f472b6!important}
+.dark text[fill="#9d174d"]{fill:#f472b6}
+.dark [style*="color: rgb(100, 116, 139)"]{color:#94a3b8!important}
+.dark text[fill="#64748b"]{fill:#94a3b8}

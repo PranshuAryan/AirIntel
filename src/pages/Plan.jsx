@@ -108,14 +108,14 @@ export default function Plan() {
   return (
     <div className="max-w-6xl mx-auto p-4 space-y-4">
       <div className="rise">
-        <h1 className="text-2xl md:text-3xl font-bold text-emerald-900 flex items-center gap-2"><Leaf className="text-emerald-700" aria-hidden="true"/>Your clean-air plan</h1>
+        <h1 className="text-2xl md:text-3xl font-bold grad-text flex items-center gap-2"><Leaf className="text-emerald-700" aria-hidden="true"/>Your clean-air plan</h1>
         <p className="text-slate-700">Low-emission routines, indoor air hacks and sustainable swaps for <b>{place.label}</b>, with the direct effect of each choice explained.</p>
       </div>
       <div className="grid gap-4 lg:grid-cols-[340px_1fr] items-start">
         <ProfileForm profile={profile} onChange={setProfile}/>
         <div className="space-y-4" aria-live="polite" aria-busy={busy}>
           {!air && !loading && <div className="glass p-4 text-sm text-slate-800" role="status"><b>No live reading for this place.</b> {err} The plan below uses general winter-smog precautions; search a nearby city for a tailored one.</div>}
-          <section className="glass p-5" style={L ? {background: `linear-gradient(180deg,${L.color}26,#fff 70%)`} : undefined} aria-labelledby="plan-head">
+          <section className="glass p-5" style={L ? {background: `linear-gradient(180deg,${L.color}26,var(--surface) 70%)`} : undefined} aria-labelledby="plan-head">
             <div className="flex flex-wrap items-center gap-2 mb-2">
               {L && <span className="text-xs font-semibold px-2.5 py-1 rounded-full text-white" style={{background: L.text}}>{air.std === 'in' ? 'NAQI' : 'US AQI'} {air.aqi} · {L.name}</span>}
               {plan.source === 'ai' ? <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-violet-100 text-violet-900 font-semibold"><Sparkles size={12} aria-hidden="true"/>Personalised by AI</span>
