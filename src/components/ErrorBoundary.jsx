@@ -9,9 +9,9 @@ export default class ErrorBoundary extends Component {
     if (!this.state.error) return this.props.children;
     return (
       <div role="alert" className="max-w-xl mx-auto p-8 text-center glass mt-8">
-        <h1 className="text-lg font-bold text-emerald-900">Something went wrong on this page</h1>
+        <h2 className="text-lg font-bold text-emerald-900">Something went wrong on this page</h2>
         <p className="text-sm text-slate-600 mt-1">The rest of the app still works. Try another page or reload.</p>
-        <button onClick={() => this.setState({error: null})} className="mt-4 px-4 py-2 rounded-full bg-emerald-700 text-white text-sm hover:bg-emerald-800">Try again</button>
+        <button onClick={() => this.setState({error: null})} aria-label="Try this page again" className="mt-4 px-4 py-2 rounded-full bg-emerald-700 text-white text-sm hover:bg-emerald-800">Try again</button>
       </div>
     );
   }

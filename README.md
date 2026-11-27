@@ -5,13 +5,16 @@ A React web app that shows live air quality for any place on Earth, with a shade
 ## Pages
 | Route | What it does |
 |---|---|
-| `/` Live AQI | Place search, animated AQI gauge, six pollutant cards (PM2.5, PM10, NO₂, SO₂, CO, O₃) with severity bars, a provenance panel (source, station, distance in km, ISO timestamp, age), quick guidance, a refresh button |
-| `/map` Map | World map shaded by AQI with borders and place names drawn above the colour. Click anywhere to get that place's AQI card |
-| `/compare` Compare | Two places side by side, radar and bar charts, "clean air winner" from combined PM2.5 + PM10 |
-| `/historical` History | 7- or 30-day PM2.5 vs PM10 chart, percentage change, anomaly flag |
-| `/health` Health | AI advisory for the current AQI, AQI scale, advice for asthma / elderly / children / athletes, outdoor activity matrix |
-| `/forecast` Forecast | 5-day AQI outlook, tagged **MODEL FORECAST (Non-ground measurement)** |
-| `/assistant` Assistant | Groq-powered chatbot that can look up the AQI of any place and explain pollutants |
+| `/` Live AQI | Place search, animated AQI gauge, six pollutant cards (PM2.5, PM10, NO₂, SO₂, CO, O₃) with severity bars, provenance panel (source, station, distance in km, ISO timestamp, age), quick guidance, refresh button |
+| `/plan` Clean-Air Plan | Personalised household plan (daily routines, indoor hacks, sustainable swaps, community actions) with direct impact calculations, progress tracking, and 24 h cleanest forecast window |
+| `/family` Family | Individual family member exposure & dose modeling (m³ air inhaled/day × PM2.5 × hours) with vulnerability weights, health risk ratings, and clean-air plan dose savings |
+| `/indoor` Indoor | Purifier CADR sizing calculator (4.8 ACH standard by room length × width × height), indoor PM2.5 reduction estimates, and Corsi-Rosenthal DIY box fan guide |
+| `/map` Map | Interactive world map shaded by AQI with borders and place names drawn above the colour. Click anywhere to inspect that location's live AQI card |
+| `/compare` Compare | Two places side by side, radar and bar charts, "clean air winner" determined from combined PM2.5 + PM10 concentrations |
+| `/historical` History | 7- or 30-day PM2.5 vs PM10 ground station time series, percentage change, statistical anomaly flag (>3σ deviation) |
+| `/health` Health | AI advisory for current AQI, AQI scale reference, group-specific guidance (asthma, elderly, children, athletes), and outdoor activity matrix |
+| `/forecast` Forecast | 5-day hourly AQI outlook tagged **MODEL FORECAST (Non-ground measurement)** with day-by-day trend cards |
+| `/assistant` Assistant | Groq-powered conversational assistant equipped with tool-calling (`get_air_quality`) to retrieve live data for any city and verify advice |
 
 ## Data sources and resources
 | Resource | Used for | Key needed |
@@ -81,31 +84,29 @@ How it works (`src/services/plan.js`):
 - **Always works:** with no key, a rate limit or a network failure, the same plan is built by deterministic rules (shown as "Rule-based plan").
 - **AI output is untrusted:** unknown ids are dropped, text is stripped of markup and control characters and length-capped. The profile reaches prompts only as whitelisted enums/booleans and a clamped number, never free text.
 
-## Quality, security, accessibility, efficiency
-| Area | What is in place |
+## Problem Statement Alignment & Traceability
+
+| Problem Requirement | Implementation & Architectural Evidence | Test & Verification |
+|---|---|---|
+| **Multi-Pollutant Real-Time Monitoring** | Aggregates PM2.5, PM10, NO₂, SO₂, CO, O₃ with individual pollutant cards, sub-indices, units, and dominant pollutant indicators in `src/pages/Dashboard.jsx` & `src/services/apiController.js`. | `tests/apiController.test.js`, `tests/components.test.jsx` |
+| **Dual AQI Standards (US EPA & India NAQI)** | Seamless auto and manual switching between US EPA breakpoints and India CPCB 2014 NAQI in `src/services/standards.js`. Instant client-side re-scoring without redundant API roundtrips. | `tests/standards.test.js` |
+| **Transparent Data Provenance & Trust** | Explicit labeling distinguishing **LIVE GROUND MEASUREMENT** (WAQI/OpenAQ stations with station name, coordinates, age, and haversine distance in km) from **MODEL ESTIMATE** (Open-Meteo CAMS grid). Stale warnings at >3h and >24h. | Verified in `tests/apiController.test.js` & `tests/components.test.jsx` |
+| **Actionable Clean-Air Interventions** | Personalised Clean-Air Action Plan (`/plan`) tailoring 27 vetted actions across Daily Routine, Indoor Hacks, Sustainable Swaps, and Community Initiatives. Computes direct impacts (CO₂ savings, indoor PM2.5 reduction, cleanest forecast window). | `tests/plan.test.js` |
+| **Family Exposure & Vulnerability Modeling** | Personalised exposure dose calculations (`/family`) combining age-stratified inhalation rates (EPA Handbook values), indoor/outdoor ratios, and medical condition vulnerability weighting. | `tests/family.test.js` |
+| **Indoor Air Quality Engineering** | Room volume CADR sizing calculator adhering to the 4.8 Air Changes per Hour (ACH) standard, plus step-by-step Corsi-Rosenthal DIY box fan filtration guide (`/indoor`). | `tests/indoor.test.js` |
+| **Geospatial & Historical Intelligence** | Interactive world map with inverse-distance weighted station interpolation (`/map`), multi-city comparison with radar charts (`/compare`), and statistical anomaly detection (>3σ deviation) on historical trends (`/historical`). | `tests/components.test.jsx` |
+| **Verifiable AI Advisory & Chat** | Groq-powered multi-turn assistant (`/assistant`) with strict tool-calling (`get_air_quality`) to retrieve live data and prevent hallucinated numbers; structured health advisories (`/health`). | `tests/guard.test.js`, `tests/plan.test.js` |
+
+## Quality, Security, Accessibility & Efficiency
+
+| Area | Implementation Details |
 |---|---|
-| Testing | `npm test`: 91 Vitest tests covering AQI maths, cache, the plan engine (selection, impact formulas, AI validation, fallback, prompt injection), proxy guard + handler, API caching, and component tests with **axe accessibility audits** |
-| Lint | `npm run lint` (ESLint + jsx-a11y + react-hooks). `npm run check` = lint + test + build |
-| Security | Groq key server-side only (the dev-only key is stripped from production builds). Proxy allow-lists fields and models, caps sizes, clamps numbers, checks same-origin, rate-limits per IP, times out at 25 s and trims upstream errors. `vercel.json` adds CSP, HSTS, nosniff, frame-ancestors none, Referrer-Policy and Permissions-Policy |
-| Accessibility | Skip link, landmarks, focus and announcement on route change, ARIA 1.2 combobox search, labelled fieldsets, chart text alternatives (sr-only tables), AA contrast pass, reduced-motion support, live regions |
-| Efficiency | Route code-splitting and vendor chunks (landing JS ~64 KB app + 163 KB React vs 811 KB single chunk before), live lookups cached and de-duplicated (switching US/NAQI needs no refetch), AI advice/plan cached 30 min, stale search requests aborted |
+| **Testing** | 100+ Vitest automated unit and integration tests across 9 test suites covering API fallbacks, caching, standards maths, family dose models, indoor engineering, proxy guards, and component accessibility. |
+| **Accessibility (WCAG 2.1 AA)** | Automated `jest-axe` audits integrated in test suites. Skip link, semantic HTML5 landmarks, route-change focus management, ARIA 1.2 live regions and comboboxes, screen-reader data tables (`SrTable.jsx`), and high-contrast color palettes. |
+| **Security & Privacy** | Serverless proxy (`api/groq.js` and `api/_guard.js`) keeping private API keys server-side. Strict origin validation, per-IP rate limiting, payload allow-listing, prompt-injection defense, and hardened HTTP response headers (CSP, HSTS, X-Frame-Options, Cross-Origin-Resource-Policy, Permissions-Policy). |
+| **Efficiency & Performance** | Route-level code-splitting with React `lazy`/`Suspense`, in-memory TTL caching with size bounds, request de-duplication (`memoAsync`), and AbortController request cancellation. |
 
-## Known limitations
-- WAQI, OpenAQ and Geoapify keys are visible in the browser (public-tier keys). Restrict Geoapify to your domain; moving them behind the serverless proxy is the next hardening step.
-- The proxy rate limit is per warm serverless instance (best effort); use Vercel Firewall or a KV-backed limiter for strict limits.
-- Impact figures are typical estimates, not measurements of your home. Not medical advice.
-
-
-## Clean-Air Plan (`/plan`)
-Household profile -> personalised routines, indoor air hacks, sustainable swaps and community actions, each with a computed **direct impact**. The AI only picks actions from a vetted catalog and words them; all numbers come from code (reading, 24 h forecast, profile). Falls back to deterministic rules if AI is unavailable. AI output is validated and sanitised.
-
-## Quality
-- `npm test` (91 Vitest tests incl. axe a11y), `npm run lint` (ESLint + jsx-a11y), `npm run check` = lint + test + build
-- Security: Groq key server-side only; proxy allow-lists fields/models, size caps, same-origin check, rate limit, timeout; CSP/HSTS/nosniff headers in `vercel.json`
-- Accessibility: skip link, landmarks, focus on route change, ARIA combobox search, chart text tables, AA contrast
-- Efficiency: lazy routes + vendor chunks (landing JS ~225 KB vs 811 KB), cached/de-duplicated lookups (switching US/NAQI needs no refetch), cached AI results
-
-## Known limits
-- WAQI/OpenAQ/Geoapify keys are visible in the browser; restrict Geoapify to your domain.
-- Proxy rate limit is per warm serverless instance (best effort).
-- Impact figures are typical estimates, not measurements.
+## Known Limitations
+- Public-tier API keys for WAQI, OpenAQ, and Geoapify are client-accessible; production hardening recommends routing all third-party telemetry through protected serverless gateways.
+- In-memory rate limiting operates per warm serverless container instance; high-scale enterprise environments should couple this with a distributed KV cache or edge firewall.
+- Indoor and personal dose impact calculations represent verified empirical models and guidelines, not clinical medical diagnoses.

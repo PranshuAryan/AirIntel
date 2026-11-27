@@ -16,7 +16,7 @@ export function validateBody(b) {
     if (typeof content !== 'string' || content.length > MAX_CONTENT) return {ok: false, error: 'Bad message content'};
     total += content.length;
     const out = {role: m.role, content};
-    if (m.role === 'tool') { if (typeof m.tool_call_id !== 'string' || m.tool_call_id.length > 100) return {ok: false, error: 'Bad tool message'}; out.tool_call_id = m.tool_call_id; }
+    if (m.role === 'tool') { if (typeof m.tool_call_id !== 'string' || m.tool_call_id.length === 0 || m.tool_call_id.length > 100) return {ok: false, error: 'Bad tool message'}; out.tool_call_id = m.tool_call_id; }
     if (m.role === 'assistant' && m.tool_calls !== undefined) {
       if (!Array.isArray(m.tool_calls) || m.tool_calls.length > 5) return {ok: false, error: 'Bad tool calls'};
       out.tool_calls = m.tool_calls.map(t => ({id: String(t?.id || '').slice(0, 100), type: 'function', function: {name: String(t?.function?.name || '').slice(0, 64), arguments: String(t?.function?.arguments || '').slice(0, 2000)}}));
@@ -58,4 +58,9 @@ export function sameOrigin(origin, host) {
   if (!origin) return true; // non-browser clients: covered by the rate limit
   try { return new URL(origin).host === host; } catch { return false; }
 }
-export const clientIp = req => String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
+export const clientIp = req => {
+  const raw = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim();
+  // Strip IPv6 brackets (e.g. [::1]:port → ::1) and normalize IPv4-mapped IPv6 (::ffff:1.2.3.4 → 1.2.3.4)
+  const unbracketed = raw.startsWith('[') ? raw.replace(/^\[([^\]]+)\].*$/, '$1') : raw;
+  return unbracketed.replace(/^::ffff:/i, '');
+};

@@ -125,7 +125,7 @@ export default function App() {
         )}
         <div role="status" aria-live="polite" className="sr-only">{announcement}</div>
         <Pages announce={announce}/>
-        <footer className="text-center text-xs text-slate-600 py-6">Data: WAQI · OpenAQ · Open-Meteo (CAMS) · Geoapify</footer>
+        <footer aria-label="Data sources" className="text-center text-xs text-slate-600 py-6">Data: WAQI · OpenAQ · Open-Meteo (CAMS) · Geoapify</footer>
       </BrowserRouter>
     </Ctx.Provider>
   );

@@ -13,6 +13,7 @@
   "check": "npm run lint && npm run test && npm run build"
  },
  "dependencies": {
+  "hermes-parser": "^0.37.0",
   "leaflet": "^1.9.4",
   "lucide-react": "^0.439.0",
   "react": "^18.3.1",

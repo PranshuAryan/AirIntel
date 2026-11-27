@@ -5,5 +5,5 @@ export default defineConfig({
     react:['react','react-dom','react-router-dom'],
     charts:['recharts'],
     map:['leaflet','react-leaflet']}}}},
-  test:{environment:'node',include:['tests/**/*.test.{js,jsx}']}
+  test:{environment:'node',setupFiles:['./tests/setup.js'],include:['tests/**/*.test.{js,jsx}']}
 });

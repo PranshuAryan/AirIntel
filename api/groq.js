@@ -6,6 +6,9 @@ const fail = (res, code, message) => res.status(code).json({error: {message}});
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
   if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return fail(res, 405, 'POST only'); }
   if (!sameOrigin(req.headers.origin, req.headers.host)) return fail(res, 403, 'Cross-origin requests are not allowed');
   if (!limit(clientIp(req))) { res.setHeader('Retry-After', '60'); return fail(res, 429, 'Too many requests, please wait a minute'); }

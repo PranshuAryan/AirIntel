@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {sanitizeMember, vulnerability, riskLevel, dose, assess, SAMPLE, GROUPS} from '../src/services/family.js';
+import {sanitizeMember, vulnerability, riskLevel, dose, assess, SAMPLE, GROUPS, loadFamily, saveFamily} from '../src/services/family.js';
 import {requiredCadr, indoorEstimate} from '../src/services/indoor.js';
 
 describe('family exposure', () => {
@@ -45,5 +45,44 @@ describe('indoor sizing', () => {
   });
   it('estimates indoor PM2.5', () => {
     expect(indoorEstimate(100)).toEqual({closed: 50, purified: 25}); expect(indoorEstimate(null)).toBeNull();
+  });
+});
+
+describe('SAMPLE members', () => {
+  it('all SAMPLE members are properly sanitized', () => {
+    for (const m of SAMPLE) {
+      expect(m.id).toMatch(/^[\w-]+$/);
+      expect(m.name.length).toBeGreaterThan(0);
+      expect(GROUPS[m.group]).toBeDefined();
+      expect(m.outdoorHours).toBeGreaterThanOrEqual(0);
+      expect(m.outdoorHours).toBeLessThanOrEqual(12);
+    }
+  });
+});
+
+describe('loadFamily / saveFamily', () => {
+  it('round-trips a family list through localStorage', () => {
+    const family = [
+      {name: 'Child', group: 'child', conditions: [], outdoorHours: 2},
+      {name: 'Elder', group: 'senior', conditions: ['resp'], outdoorHours: 1},
+    ];
+    saveFamily(family);
+    const loaded = loadFamily();
+    expect(loaded).toHaveLength(2);
+    expect(loaded[0].name).toBe('Child');
+    expect(loaded[1].conditions).toEqual(['resp']);
+  });
+
+  it('returns an empty array when localStorage is empty or corrupt', () => {
+    localStorage.clear();
+    expect(loadFamily()).toEqual([]);
+    localStorage.setItem('airintel.family.v1', 'NOT JSON');
+    expect(loadFamily()).toEqual([]);
+  });
+
+  it('caps the saved list to 8 members', () => {
+    const many = Array(12).fill({name: 'P', group: 'adult', conditions: [], outdoorHours: 2});
+    saveFamily(many);
+    expect(loadFamily()).toHaveLength(8);
   });
 });

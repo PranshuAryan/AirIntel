@@ -1,5 +1,27 @@
-import {geocode,getAirQuality} from './apiController.js';import {lv} from '../lib.js';import {ttlCache} from './cache.js';import {sanitizeProfile} from './plan.js';
-const KEY=import.meta.env.DEV?import.meta.env.VITE_GROQ_KEY:undefined; // dev only: the production bundle never contains a key; it calls /api/groq instead
+/**
+ * Groq AI client — two-mode operation:
+ *
+ *   Development:  calls api.groq.com/openai/v1/chat/completions directly using
+ *                 VITE_GROQ_KEY (injected at build time, never sent to users).
+ *
+ *   Production:   VITE_GROQ_KEY is intentionally undefined in the production bundle.
+ *                 All requests are forwarded through /api/groq (api/groq.js), a Vercel
+ *                 serverless function that keeps GROQ_API_KEY server-side, enforces
+ *                 rate-limiting, same-origin checks, and input validation before
+ *                 proxying to Groq.
+ *
+ * Exports:
+ *   call(messages, extra)   — raw chat completion, returns the assistant message object
+ *   askJSON(messages)       — JSON-mode completion, returns the raw text content
+ *   chat(history, place, air, profile) — multi-turn assistant with tool-use (get_air_quality)
+ *   advise(place, air)      — structured health advice object (cached 30 min)
+ */
+import {geocode, getAirQuality} from './apiController.js';
+import {lv} from '../lib.js';
+import {ttlCache} from './cache.js';
+import {sanitizeProfile} from './plan.js';
+
+const KEY = import.meta.env.DEV ? import.meta.env.VITE_GROQ_KEY : undefined; // dev only: the production bundle never contains a key; it calls /api/groq instead
 /* llama-3.3-70b-versatile was retired by Groq (Aug 2026). Replacement: openai/gpt-oss-120b; others are automatic fallbacks. */
 const MODELS=[import.meta.env.VITE_GROQ_MODEL,'openai/gpt-oss-120b','openai/gpt-oss-20b','qwen/qwen3.8-27b'].filter(Boolean);let okModel=null;
 export async function call(messages,extra={}){

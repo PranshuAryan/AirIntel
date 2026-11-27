@@ -40,6 +40,10 @@ describe('validateBody', () => {
     expect(validateBody({...ok, response_format: {type: 'json_object'}}).body.response_format).toEqual({type: 'json_object'});
     expect(validateBody({...ok, response_format: {type: 'json_schema'}}).body.response_format).toBeUndefined();
   });
+  it('rejects empty tool_call_id on tool messages', () => {
+    expect(validateBody({...ok, messages: [{role: 'tool', content: 'result', tool_call_id: ''}]}).ok).toBe(false);
+    expect(validateBody({...ok, messages: [{role: 'tool', content: 'result', tool_call_id: 'call_abc'}]}).ok).toBe(true);
+  });
 });
 
 describe('makeLimiter', () => {
@@ -48,6 +52,34 @@ describe('makeLimiter', () => {
     expect([lim('a'), lim('a'), lim('a'), lim('a')]).toEqual([true, true, true, false]);
     expect(lim('b')).toBe(true);
     t = 1000; expect(lim('a')).toBe(true);
+  });
+});
+
+import {clientIp} from '../api/_guard.js';
+
+describe('clientIp', () => {
+  const makeReq = (xff, addr) => ({headers: {'x-forwarded-for': xff}, socket: {remoteAddress: addr}});
+
+  it('extracts the first IP from x-forwarded-for', () => {
+    expect(clientIp(makeReq('1.2.3.4, 5.6.7.8', undefined))).toBe('1.2.3.4');
+  });
+
+  it('strips IPv4-mapped IPv6 prefix (::ffff:)', () => {
+    expect(clientIp(makeReq('::ffff:1.2.3.4', undefined))).toBe('1.2.3.4');
+    expect(clientIp(makeReq('::FFFF:9.9.9.9', undefined))).toBe('9.9.9.9');
+  });
+
+  it('strips IPv6 bracket notation including port ([::1]:1234)', () => {
+    expect(clientIp(makeReq(undefined, '[::1]:1234'))).toBe('::1');
+    expect(clientIp(makeReq(undefined, '[2001:db8::1]:8080'))).toBe('2001:db8::1');
+  });
+
+  it('falls back to socket.remoteAddress when x-forwarded-for is absent', () => {
+    expect(clientIp({headers: {}, socket: {remoteAddress: '10.0.0.1'}})).toBe('10.0.0.1');
+  });
+
+  it('returns "unknown" when both sources are missing', () => {
+    expect(clientIp({headers: {}, socket: {}})).toBe('unknown');
   });
 });
 

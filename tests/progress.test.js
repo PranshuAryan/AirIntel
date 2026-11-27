@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {recordDay, stats, todayKey} from '../src/services/progress.js';
+import {recordDay, stats, todayKey, loadProgress, saveProgress} from '../src/services/progress.js';
 
 describe('progress tracking', () => {
   it('formats local dates', () => { expect(todayKey(new Date(2026, 10, 5))).toBe('2026-11-05'); });
@@ -26,5 +26,33 @@ describe('progress tracking', () => {
   });
   it('does not mutate its input', () => {
     const s = {days: {}}; recordDay(s, '2026-11-01', ['a']); expect(s.days).toEqual({});
+  });
+});
+
+describe('loadProgress / saveProgress', () => {
+  it('returns an empty store when localStorage has no data', () => {
+    localStorage.clear();
+    const s = loadProgress();
+    expect(s).toMatchObject({days: {}});
+  });
+
+  it('returns an empty store for corrupt JSON in localStorage', () => {
+    localStorage.setItem('airintel.progress.v1', 'BROKEN{{{');
+    expect(loadProgress()).toMatchObject({days: {}});
+  });
+
+  it('returns an empty store when days is not an object', () => {
+    localStorage.setItem('airintel.progress.v1', JSON.stringify({days: 'bad'}));
+    expect(loadProgress()).toMatchObject({days: {}});
+  });
+
+  it('round-trips a store through saveProgress and loadProgress', () => {
+    localStorage.clear();
+    let s = {days: {}};
+    s = recordDay(s, '2026-11-01', ['mask_n95', 'close_windows'], 1.2);
+    saveProgress(s);
+    const loaded = loadProgress();
+    expect(loaded.days['2026-11-01'].done).toEqual(['mask_n95', 'close_windows']);
+    expect(loaded.days['2026-11-01'].co2).toBeCloseTo(1.2, 1);
   });
 });

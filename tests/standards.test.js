@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {naqi, usIndex, concFromUs, toConc, applyStandard, setStandard} from '../src/services/standards.js';
+import {naqi, usIndex, concFromUs, toConc, applyStandard, setStandard, getStandard} from '../src/services/standards.js';
 
 describe('India NAQI sub-index', () => {
   it('hits the CPCB category boundaries', () => {
@@ -30,6 +30,31 @@ describe('US conversions', () => {
     expect(toConc('co', 1, 'ppm')).toBeCloseTo(1.145, 3);
     expect(toConc('no2', 100, 'ppb')).toBeCloseTo(188, 1);
     expect(toConc('co', 1500, 'µg/m³')).toBeCloseTo(1.5, 3);
+  });
+  it('toConc passes through µg/m³ gases unchanged', () => {
+    // When unit is µg/m³ for a gas (not ppm/ppb), returns the value directly
+    expect(toConc('no2', 50, 'µg/m³')).toBe(50);
+    expect(toConc('so2', 80, 'µg/m³')).toBe(80);
+  });
+  it('toConc handles CO in ppb correctly', () => {
+    // CO ppb: v * 0.001145
+    expect(toConc('co', 1000, 'ppb')).toBeCloseTo(1.145, 3);
+  });
+  it('usIndex returns null for missing or unknown input', () => {
+    expect(usIndex('pm25', null)).toBeNull();
+    expect(usIndex('unknown_key', 50)).toBeNull();
+  });
+});
+
+describe('setStandard / getStandard', () => {
+  it('round-trips between us and in', () => {
+    setStandard('in'); expect(getStandard()).toBe('in');
+    setStandard('us'); expect(getStandard()).toBe('us');
+  });
+  it('ignores invalid values and defaults to us', () => {
+    setStandard('in'); // set to in first
+    setStandard('xyz'); // invalid — should default to us
+    expect(getStandard()).toBe('us');
   });
 });
 

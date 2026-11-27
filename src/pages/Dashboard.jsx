@@ -13,9 +13,9 @@ export default function Dashboard(){
   const{air,loading,err,place,setPlace,refresh}=useApp(),[v,setV]=useState(0),[go,setGo]=useState(false),[,tick]=useState(0),[spin,setSpin]=useState(false),n=useCount(air?.aqi||0);
   useEffect(()=>{const i=setInterval(()=>tick(x=>x+1),30000);return()=>clearInterval(i)},[]);
   useEffect(()=>{setV(0);setGo(false);const t=setTimeout(()=>{setV(air?.aqi||0);setGo(true)},80);return()=>clearTimeout(t)},[air]);
-  const chips=<div className="lg:col-span-2 flex flex-wrap gap-2 items-center text-sm"><span className="text-slate-600">Try:</span>{CITIES.map(([c,lat,lon,cc])=>
-    <button key={c} onClick={()=>setPlace({label:c,lat,lon,cc})} className="px-3 py-1 rounded-full bg-white border border-emerald-200 text-emerald-800 hover:bg-emerald-700 hover:text-white hover:border-emerald-700 hover:-translate-y-0.5">{c}</button>)}</div>;
-  if(loading)return<div className="max-w-6xl mx-auto p-4 grid gap-4 lg:grid-cols-[380px_1fr]" role="status" aria-label="Fetching live air quality">{chips}<div className="skeleton h-[470px]"/><div className="grid grid-cols-2 md:grid-cols-3 gap-4 content-start">{KEYS.map(k=><div key={k} className="skeleton h-36"/>)}<div className="skeleton h-28 col-span-full"/></div></div>;
+  const chips=<nav aria-label="Quick city selection" className="lg:col-span-2 flex flex-wrap gap-2 items-center text-sm"><span className="text-slate-600" aria-hidden="true">Try:</span>{CITIES.map(([c,lat,lon,cc])=>
+    <button key={c} onClick={()=>setPlace({label:c,lat,lon,cc})} className="px-3 py-1 rounded-full bg-white border border-emerald-200 text-emerald-800 hover:bg-emerald-700 hover:text-white hover:border-emerald-700 hover:-translate-y-0.5">{c}</button>)}</nav>;
+  if(loading)return<div className="max-w-6xl mx-auto p-4 grid gap-4 lg:grid-cols-[380px_1fr]" role="status" aria-label="Fetching live air quality" aria-busy="true">{chips}<div className="skeleton h-[470px]"/><div className="grid grid-cols-2 md:grid-cols-3 gap-4 content-start">{KEYS.map(k=><div key={k} className="skeleton h-36"/>)}<div className="skeleton h-28 col-span-full"/></div></div>;
   if(!air)return<div className="max-w-6xl mx-auto p-4 grid gap-4">{chips}<div className="glass p-8 text-center max-w-xl mx-auto" role="alert"><p className="font-bold text-emerald-900 mb-1">No live station reading here</p><p className="text-sm text-slate-600">{err}</p><p className="text-xs text-slate-600 mt-3">Try a nearby city or search another place.</p></div></div>;
   const L=lv(air.aqi),R=90,C=2*Math.PI*R,cur=LV.findIndex(l=>air.aqi<=l[0]);
   return<div className="max-w-6xl mx-auto p-4 grid gap-4 lg:grid-cols-[380px_1fr]">
@@ -37,7 +37,7 @@ export default function Dashboard(){
         {air.converted&&<p className="text-xs text-amber-700">NAQI estimated by converting this station's US-scale readings.</p>}{air.dominant&&<p className="text-xs text-slate-700">Dominant pollutant: {NAMES[air.dominant]}</p>}
         {air.errors.length>0&&<p className="text-xs text-slate-600">Fallback used — {air.errors.join(' • ')}</p>}</div></section>
     <div className="space-y-4">
-      <section className="grid grid-cols-2 md:grid-cols-3 gap-4 stagger">{KEYS.map(k=>{const p=air.pollutants[k],l=p?.sub!=null?lv(p.sub):null;
+      <section aria-label="Pollutant breakdown" className="grid grid-cols-2 md:grid-cols-3 gap-4 stagger">{KEYS.map(k=>{const p=air.pollutants[k],l=p?.sub!=null?lv(p.sub):null;
         return<div key={k} className="glass p-4 lift"><div className="flex justify-between items-center gap-2"><span className="font-bold">{NAMES[k]}</span>
           <span className="text-[10px] leading-tight text-right px-2 py-0.5 rounded-full font-semibold max-w-[110px]" style={{background:(l?.color||'#94a3b8')+'33',color:l?.text||'#64748b'}}>{l?.name||'n/a'}</span></div>
           <p className="text-3xl font-bold mt-3">{p?p.value:'—'}</p><p className="text-xs text-slate-600">{p?.unit||'not reported'}</p>
